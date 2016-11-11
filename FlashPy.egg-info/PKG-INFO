@@ -1,0 +1,25 @@
+Metadata-Version: 1.1
+Name: FlashPy
+Version: 0.0.1.dev1
+Summary: A Python module for visualising and analysing HDF5 output files from FLASH simulations
+Home-page: https://github.com/JBuete/FlashPy
+Author: Jacob Buete
+Author-email: jacob.buete@gmail.com
+License: MIT
+Description: FlashPy
+        =======
+        
+        This is a module designed to work with hdf5 output files from `FLASH <http://flash.uchicago.edu/site/>`__ simulations. 
+        It provides basic analysis tools, and methods for the importation and visualisation of the files. 
+        
+        
+        
+Keywords: FLASH data hdf5 analysis visualisation
+Platform: UNKNOWN
+Classifier: Development Status :: 1 - Planning
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Scientific/Engineering :: Physics
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5

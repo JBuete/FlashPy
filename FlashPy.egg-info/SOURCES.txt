@@ -1,0 +1,10 @@
+README.rst
+setup.cfg
+setup.py
+FlashPy/__init__.py
+FlashPy.egg-info/PKG-INFO
+FlashPy.egg-info/SOURCES.txt
+FlashPy.egg-info/dependency_links.txt
+FlashPy.egg-info/requires.txt
+FlashPy.egg-info/top_level.txt
+FlashPy/../README.rst

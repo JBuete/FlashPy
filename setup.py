@@ -65,7 +65,7 @@ setup(
     },
 
     package_data={
-        'FlashPy': '../README.rst',    
+        'FlashPy': ['../README.rst'],    
     }
 )
 
