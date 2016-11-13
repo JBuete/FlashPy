@@ -18,4 +18,10 @@ class Data():
 
         return keys
 
+    def get_values(self, key):
+        data = self.contents[key][:]
+
+        return data
+
+
 

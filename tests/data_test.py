@@ -14,7 +14,7 @@ class DataTestSuite(unittest.TestCase):
         self.assertTrue(True)
 
     def test_key(self):
-        data = FlashPy.Data('key_test')
+        data = FlashPy.Data('tests/key_test')
 
         
         self.assertEqual(data.get_keys(), ['ones'])
