@@ -1,0 +1,11 @@
+# for Travis CI testing 
+language: python
+
+python:
+    - "3.4"
+    - "3.5"
+
+install: "pip3 install -r requirements.txt"
+
+script: 
+    - python3 -m unittest discover . "_test.py"
