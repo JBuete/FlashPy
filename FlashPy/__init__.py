@@ -1,7 +1,5 @@
 
-import logging
+from .data import Data
 
-def main():
 
-    logging.info("I'm alive!")
 
