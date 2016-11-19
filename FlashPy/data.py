@@ -3,6 +3,7 @@
 
 import h5py
 import numpy
+import logging
 
 class Data():
     """The basic datatype for the FlashPy module. 
@@ -14,6 +15,19 @@ class Data():
         self.contents   = h5py.File(filename)
         self.leaves     = self._get_leaves(self.contents['refine level'][:])
         self.ndim       = self.contents['coordinates'][:].shape[-1] # get the dims  
+        self.index      = self._get_index()
+        
+    def _get_index(self):
+        """Recovers the index of the sorted block list"""
+        
+        # first load the coordinates into memory, only the leaves
+        coords = self.contents['coordinates'][:][self.leaves]
+        
+        # now calculate the index
+        index = numpy.lexsort((coords[:,2], coords[:,1], coords[:,0]))
+        
+        return index
+        
         
     def get_keys(self):
         """Recover the list of keys from the file"""
@@ -41,7 +55,6 @@ class Data():
         """
         dataset = self.contents[key][:][self.leaves]
         
-        
         if unpack:
             dataset = self._unpack_data(dataset)
         
@@ -62,14 +75,20 @@ class Data():
         data_array
             The same values unpacked. 
         """
+        
+        # first sort the data_array by the coordinates of each of the blocks
+        data_array = data_array[self.index]
+        
+        # then get the number of blocks on each axis (assumes cubic)
         ncells  = data_array.shape[0]
         nblocks = round(ncells**(1/3)) 
-        
+
+        # sort the data_array into the new shape
         data_array = numpy.concatenate(
                     [numpy.concatenate(
                     [numpy.concatenate(
-                        data_array[j*nblocks**2+i*nblocks:j*nblocks**2+(i+1)*nblocks], axis=2)
-                        for i in range(nblocks)], axis=1) for j in range(nblocks)], axis=0)
+                        data_array[j*nblocks**2+i*nblocks:j*nblocks**2+(i+1)*nblocks], axis=0)
+                        for i in range(nblocks)], axis=1) for j in range(nblocks)], axis=2)
         
         
         return data_array

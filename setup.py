@@ -58,6 +58,7 @@ setup(
         'h5py',
         'numpy',
         'matplotlib',
+        'pyfftw',
     ],
 
     package_dir={
