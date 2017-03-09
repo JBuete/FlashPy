@@ -17,8 +17,12 @@ def gen_async_data():
 
         # now add the information
         info = numpy.ones(shape)
+        refine = numpy.ones(shape[0])
+        coords = numpy.ones((shape[0], 3))
 
         data.create_dataset("data", shape=shape, data=info)
+        data.create_dataset("refine level", shape=(shape[0],), data=refine)
+        data.create_dataset("coordinates", shape=(shape[0], 3), data=coords)
 
 
 if __name__ == '__main__':

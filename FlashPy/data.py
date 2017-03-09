@@ -14,8 +14,13 @@ class Data():
 
     def __init__(self, filename):
         self.contents = h5py.File(filename)
-        self.leaves = self._get_leaves(self.contents['refine level'][:])
-        self.ndim = self.contents['coordinates'][:].shape[-1]  # get the dims
+
+        if 'refine level' in self.contents:
+            self.leaves = self._get_leaves(self.contents['refine level'][:])
+
+        if 'coordinates' in self.contents:
+            self.ndim = self.contents['coordinates'][:].shape[-1]  # get the dims
+
         self.index = self._get_index()
         self.properties = self._get_properties()
 
@@ -25,23 +30,29 @@ class Data():
         properties = {}
 
         # first we want to run through all of the known properties
-        properties.update({name.rstrip().decode('utf-8'): value for name, value
-                           in self.contents['integer runtime parameters'][:]})
+        if 'integer runtime parameters' in self.contents:
+            properties.update({name.rstrip().decode('utf-8'): value for name, value
+                               in self.contents['integer runtime parameters'][:]})
 
-        properties.update({name.rstrip().decode('utf-8'): value for name, value
-                           in self.contents['real runtime parameters'][:]})
+        if 'real runtime parameters' in self.contents:
+            properties.update({name.rstrip().decode('utf-8'): value for name, value
+                               in self.contents['real runtime parameters'][:]})
 
-        properties.update({name.rstrip().decode('utf-8'): value.rstrip().decode('utf-8') for name, value
-                           in self.contents['string runtime parameters'][:]})
+        if 'string runtime parameters' in self.contents:
+            properties.update({name.rstrip().decode('utf-8'): value.rstrip().decode('utf-8') for name, value
+                               in self.contents['string runtime parameters'][:]})
 
-        properties.update({name.rstrip().decode('utf-8'): value for name, value
-                           in self.contents['integer scalars'][:]})
+        if 'integer scalars' in self.contents:
+            properties.update({name.rstrip().decode('utf-8'): value for name, value
+                               in self.contents['integer scalars'][:]})
 
-        properties.update({name.rstrip().decode('utf-8'): value for name, value
-                           in self.contents['real scalars'][:]})
+        if 'real scalars' in self.contents:
+            properties.update({name.rstrip().decode('utf-8'): value for name, value
+                               in self.contents['real scalars'][:]})
 
-        properties.update({name.rstrip().decode('utf-8'): value.rstrip().decode('utf-8') for name, value
-                           in self.contents['string scalars'][:]})
+        if 'string scalars' in self.contents:
+            properties.update({name.rstrip().decode('utf-8'): value.rstrip().decode('utf-8') for name, value
+                               in self.contents['string scalars'][:]})
 
         return properties
 
@@ -95,7 +106,7 @@ class Data():
             return None
 
         if unpack:
-            dataset = self._unpack_data(dataset)
+            dataset = self._unpack_data2(dataset)
 
         return dataset
 
@@ -126,10 +137,81 @@ class Data():
         data_array = numpy.concatenate(
             [numpy.concatenate(
                 [numpy.concatenate(
-                    data_array[j * nblocks**2 + i * nblocks:j * nblocks**2 + (i + 1) * nblocks], axis=0
+                    data_array[j * nblocks**2 + i * nblocks:j *
+                               nblocks**2 + (i + 1) * nblocks], axis=0
                 ) for i in range(nblocks)], axis=1
             ) for j in range(nblocks)], axis=2
         )
+
+        return data_array
+
+    def _unpack_data2(self, data_array):
+        """Unpacks a 4D dataset into the 'correct' 3D shape associated with the
+        size of the simulation box. This currently assumes that the simulation box
+        is cubic, with the same number of blocks in each direction.
+
+        Parameters
+        ------------
+        data_array
+            The dataset to unpack.
+
+        Returns
+        ------------
+        data_array
+            The same values unpacked.
+        """
+
+        # first sort the data_array by the coordinates of each of the blocks
+        data_array = data_array[self.index]
+
+        # get the shape of the data
+        shape = data_array.shape
+
+        # based on if nblocks is cubic, square, or neither, we need to treat
+        # the unpacking differently
+        ncells = shape[1:]
+
+        max_dim = max(ncells)
+
+        no_max_dims = ncells.count(max_dim)
+
+        if no_max_dims == 3:  # all dimensions are the same
+            nblocks = round(shape[0]**(1 / 3))
+
+            # sort the data_array into the new shape
+            data_array = numpy.concatenate(
+                [numpy.concatenate(
+                    [numpy.concatenate(
+                        data_array[j * nblocks**2 + i * nblocks:j *
+                                   nblocks**2 + (i + 1) * nblocks], axis=0
+                    ) for i in range(nblocks)], axis=1
+                ) for j in range(nblocks)], axis=2
+            )
+        elif no_max_dims == 2:  # only one of the dimensions is different
+
+            # first find out which dimension isn't correct
+            for dim in len(ncells):
+                if ncells[dim] != max_dim:  # this is the one we're looking for
+                    break
+
+            # now we can perform the reshaping
+            data_array = numpy.concatenate(data_array, axis=dim)
+
+        elif no_max_dims == 1:  # two of the dimensions are different
+            # we are going to assume the other two dimensions are the same
+            if ncells[1] != max_dim:
+                nbs = int(max_dim / ncells[1])
+            else:
+                nbs = int(max_dim / ncells[2])
+
+            data_array = numpy.concatenate(
+                numpy.concatenate(
+                    [data_array[i * nbs:(i + 1) * nbs] for i in range(nbs)], axis=3
+                ), axis=1
+            )
+
+        else:
+            raise ValueError("None of the provided dimensions are the maximum?")
 
         return data_array
 
