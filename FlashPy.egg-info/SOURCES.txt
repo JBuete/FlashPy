@@ -2,6 +2,9 @@ README.rst
 setup.cfg
 setup.py
 FlashPy/__init__.py
+FlashPy/analysis.py
+FlashPy/data.py
+FlashPy/visualisation.py
 FlashPy.egg-info/PKG-INFO
 FlashPy.egg-info/SOURCES.txt
 FlashPy.egg-info/dependency_links.txt

@@ -16,12 +16,9 @@ def get_profile(data_set, quantity, process='mean', centre=(0, 0, 0), radius=0):
     across the smallest width of the box
 
     Arguments
-    ---------
+    ======================
 
     process = [mean, max, min]
-
-    
-
     """
 
     # first get the width of the box that we need
