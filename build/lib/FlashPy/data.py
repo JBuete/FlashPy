@@ -3,6 +3,7 @@
 
 import h5py
 import numpy
+import re
 import logging
 
 
@@ -22,7 +23,10 @@ class Data():
             self.ndim = self.contents['coordinates'][:].shape[-1]  # get the dims
 
         self.index = self._get_index()
+
         self.properties = self._get_properties()
+
+        self.user_fields = {}
 
     def _get_properties(self):
         """Creates a dictionary of the simulation parameters and scalars"""
@@ -91,6 +95,8 @@ class Data():
         dataset
             A numpy.ndarray containing the values from the nominated dataset.
         """
+        if type(key) == float:
+            return key
 
         # first check if the key is actually one of the properties
         if key in self.properties.keys():
@@ -99,11 +105,14 @@ class Data():
             return self.properties[key]
 
         # if not one of the properties then try and grab some values
-        try:
-            dataset = self.contents[key][:][self.leaves]
-        except KeyError:
-            logging.error("{} is not a valid key".format(key))
-            return None
+        if key in self.user_fields.keys():
+            dataset = self.user_fields[key][self.leaves]
+        else:
+            try:
+                dataset = self.contents[key][:][self.leaves]
+            except KeyError:
+                logging.error("{} is not a valid key".format(key))
+                return None
 
         if unpack:
             dataset = self._unpack_data2(dataset)
@@ -211,7 +220,7 @@ class Data():
             )
 
         else:
-            raise ValueError("None of the provided dimensions are the maximum?")
+            raise ValueError("None of the dimensions are the maximum?")
 
         return data_array
 
@@ -259,3 +268,106 @@ class Data():
             max_res_z = nzb * self.properties['kprocs']
 
         return final_data
+
+    def _convert_terms(terms):
+        """
+        _convert_terms(terms)
+
+        Converts any potential floats in the terms to floats
+        """
+        for i in range(len(terms)):
+            try:
+                terms[i] = float(terms[i])
+            except ValueError:
+                continue
+        return terms
+
+    def create_field(self, name, expr):
+        """
+        create_field(name, expr)
+
+        Allows the user to create a new field from existing fields for use
+        in analysis. The field will be called `name` and is defined by the
+        expression `expr`.
+
+        Parameters
+        ----------
+        name : str
+            The name of the field to be added.
+        expr : list of str
+            The definition of the field. The definition must use pre-existing
+            fields and standard mathematical symbols (`*`, `-`, `/`)
+
+        Notes
+        -----
+        The expression used for the definition of the field has to be in a
+        specific format. In order to simplify the code required to parse the
+        expression, the expression must be a list of clusters of multiplication
+        and devision that are then added together.
+
+        For example, the expression "a + b*c + 1/d" would be formatted as
+        follows:
+
+            ["a", "b*c", "1/d"]
+
+        Subtraction is included, however it requires a `-` inside the term to
+        be subtracted. This is equivalent to the fact that "a - b" is "a + -b",
+        and would be defined as follows:
+
+            ["a", "-b"]
+
+        Examples
+        --------
+        Creating a velocity vector
+
+        >>> data = FlashPy.Data(my_data)
+        >>> data.create_field("vel", ["velx*velx", "vely * vely", "velz *velz"])
+
+        Note that the whitespace in the terms within the expression doesn't
+        matter, so they can be formatted however is most visually clear.
+
+        We can then use the `vel` field to make a momentumn field
+
+        >>> data.create_field("mom", ["dens*vel"])
+        """
+
+        if name in self.get_keys() or name in self.user_fields.keys():
+            raise ValueError("Supplied name is already an existing field")
+
+        if expr == []:  # there wasn't a supplied expression
+            raise ValueError("There is no supplied expression")
+
+        # define the pattern that we use for the regex
+        pattern = r"([a-z]+|[0-9\.]+|[\*\-/])"
+
+        # now we want to parse the expression
+        value = 0  # this is the holder
+        for part in expr:
+
+            terms = re.findall(pattern, part)
+
+            # if the first part is `-` then we need to negate the values
+            if terms[0] == '-':
+                scale = -1
+                terms = terms[1:]
+
+            # convert any terms that are floats
+            terms = _convert_terms(terms)
+
+            # now extract the first value using the necessary scale
+            temp = scale * self.get_values(terms[0])
+
+            # every second part of the term should be an operator
+            # if not we have an invalid expression
+            for i in range(1, len(terms), 2):
+                if terms[i] == "*":
+                    temp *= self.get_values(terms[i + 1])
+                elif terms[i] == '/':
+                    temp /= self.get_values(terms[i + 1])
+                else:
+                    raise ValueError("The provided expression is not valid")
+
+            value += temp
+
+        # now define the field
+        self.user_fields[name] = value

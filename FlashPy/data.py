@@ -269,6 +269,19 @@ class Data():
 
         return final_data
 
+    def _convert_terms(terms):
+        """
+        _convert_terms(terms)
+
+        Converts any potential floats in the terms to floats
+        """
+        for i in range(len(terms)):
+            try:
+                terms[i] = float(terms[i])
+            except ValueError:
+                continue
+        return terms
+
     def create_field(self, name, expr):
         """
         create_field(name, expr)
@@ -334,25 +347,23 @@ class Data():
             terms = re.findall(pattern, part)
 
             # if the first part is `-` then we need to negate the values
-            # otherwise use the first value
             if terms[0] == '-':
                 scale = -1
                 terms = terms[1:]
 
-            # convert floats
-            for i in range(len(terms)):
-                try:
-                    terms[i] = float(terms[i])
-                except ValueError:
-                    continue
+            # convert any terms that are floats
+            terms = _convert_terms(terms)
 
-            temp = scale * self.get_values(temp[0])
+            # now extract the first value using the necessary scale
+            temp = scale * self.get_values(terms[0])
 
+            # every second part of the term should be an operator
+            # if not we have an invalid expression
             for i in range(1, len(terms), 2):
                 if terms[i] == "*":
-                    temp *= self.get_values(temp[i + 1])
+                    temp *= self.get_values(terms[i + 1])
                 elif terms[i] == '/':
-                    temp /= self.get_values(temp[i + 1])
+                    temp /= self.get_values(terms[i + 1])
                 else:
                     raise ValueError("The provided expression is not valid")
 
