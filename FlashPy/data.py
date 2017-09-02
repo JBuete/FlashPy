@@ -269,7 +269,7 @@ class Data():
 
         return final_data
 
-    def _convert_terms(terms):
+    def _convert_terms(self, terms):
         """
         _convert_terms(terms)
 
@@ -346,13 +346,15 @@ class Data():
 
             terms = re.findall(pattern, part)
 
+            scale = 1  # this is a scaling factor for the terms
+
             # if the first part is `-` then we need to negate the values
             if terms[0] == '-':
                 scale = -1
                 terms = terms[1:]
 
             # convert any terms that are floats
-            terms = _convert_terms(terms)
+            terms = self._convert_terms(terms)
 
             # now extract the first value using the necessary scale
             temp = scale * self.get_values(terms[0])

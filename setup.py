@@ -22,7 +22,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 setup(
     name = 'FlashPy',
     
-    version = '0.0.1.dev1',
+    version = '0.0.4',
     
     description = 'A Python module for visualising and analysing HDF5 output files from FLASH simulations',
 
@@ -37,7 +37,7 @@ setup(
     license = 'MIT',
 
     classifiers=[
-        'Development Status :: 1 - Planning',
+        'Development Status :: 3 - Alpha',
 
         'Intended Audience :: Science/Research',
 
@@ -48,6 +48,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
 
     keywords = 'FLASH data hdf5 analysis visualisation',
@@ -58,7 +59,6 @@ setup(
         'h5py',
         'numpy',
         'matplotlib',
-        'pyfftw',
     ],
 
     package_dir={

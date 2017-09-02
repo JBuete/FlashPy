@@ -1,7 +1,6 @@
 #!/bin/env/python3
 # -*- coding: utf-8 -*-
 
-import pyfftw
 import numpy
 
 
@@ -10,7 +9,8 @@ def density_spectrum():
     pass
 
 
-def get_profile(data_set, quantity, process='mean', centre=(0, 0, 0), radius=0):
+def get_profile(data_set, quantity, process='mean', centre=(0, 0, 0), radius=0,
+                sqrt=False):
     """Generates a 1d profile for the selected quantity for the given data_set.
     The profile has (n - 1) data points, where n is half the number of cells
     across the smallest width of the box
@@ -19,8 +19,6 @@ def get_profile(data_set, quantity, process='mean', centre=(0, 0, 0), radius=0):
     ---------
 
     process = [mean, max, min]
-
-    
 
     """
 
@@ -50,13 +48,19 @@ def get_profile(data_set, quantity, process='mean', centre=(0, 0, 0), radius=0):
 
     # now we can do the filtering
     if radius == 0:
-        intervals = numpy.linspace(0, x_width / 2, ncells // 2)  # n - 1 intervals
+        intervals = numpy.linspace(
+            0, x_width / 2, ncells // 2)  # n - 1 intervals
     else:
         intervals = numpy.linspace(0, radius,
                                    (ncells * (2 / x_width * radius)) // 2)
 
-    radius = intervals[:-1] + (intervals[1] - intervals[0]) / 2  # centre of intervals
+    radius = intervals[:-1] + \
+        (intervals[1] - intervals[0]) / 2  # centre of intervals
     values = numpy.empty(radius.shape)
+
+    # check if we want to sqrt the data
+    if sqrt:
+        data = numpy.sqrt(data)
 
     # we also want to figure out the process that we're using
     if process == 'mean':
@@ -66,7 +70,8 @@ def get_profile(data_set, quantity, process='mean', centre=(0, 0, 0), radius=0):
     elif process == 'min':
         proc = numpy.min
     else:
-        raise ValueError("{} is not a process that can be used".format(process))
+        raise ValueError(
+            "{} is not a process that can be used".format(process))
 
     for i in range(len(intervals) - 1):
         filtering = (radii <= intervals[i + 1]) & (radii >= intervals[i])
@@ -109,7 +114,8 @@ def slice(data_set, quantity, position=0, face='xy'):
         raise ValueError("{} is not a face that can be selected".format(face))
 
     # next we want to figure out where along that axis the slice is
-    pos = numpy.where(coords >= position)[0][0] - 1  # this is the one just under it
+    # this is the one just under it
+    pos = numpy.where(coords >= position)[0][0] - 1
 
     # now grab that slice and the one after it and we'll weight the information
     cell_width = abs(coords[1] - coords[0])
@@ -133,7 +139,7 @@ def pdf(data_set, quantity, nbins, norm=True, range=None):
     data = data_set.get_values(quantity, unpack=True)
 
     # generate the pdf
-    pdf, bins_edges = numpy.histogram(data, nbins, normed=norm, range=range)
+    pdf, bin_edges = numpy.histogram(data, nbins, normed=norm, range=range)
 
     bins = bin_edges[:-1] + (bin_edges[1] - bin_edges[0]) / 2
 

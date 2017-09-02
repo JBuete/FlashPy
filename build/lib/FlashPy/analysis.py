@@ -10,15 +10,17 @@ def density_spectrum():
     pass
 
 
-def get_profile(data_set, quantity, process='mean', centre=(0, 0, 0), radius=0):
+def get_profile(data_set, quantity, process='mean', centre=(0, 0, 0), radius=0,
+                sqrt=False):
     """Generates a 1d profile for the selected quantity for the given data_set.
     The profile has (n - 1) data points, where n is half the number of cells
     across the smallest width of the box
 
     Arguments
-    ======================
+    ---------
 
     process = [mean, max, min]
+
     """
 
     # first get the width of the box that we need
@@ -54,6 +56,10 @@ def get_profile(data_set, quantity, process='mean', centre=(0, 0, 0), radius=0):
 
     radius = intervals[:-1] + (intervals[1] - intervals[0]) / 2  # centre of intervals
     values = numpy.empty(radius.shape)
+
+    # check if we want to sqrt the data
+    if sqrt:
+        data = numpy.sqrt(data)
 
     # we also want to figure out the process that we're using
     if process == 'mean':
@@ -130,7 +136,7 @@ def pdf(data_set, quantity, nbins, norm=True, range=None):
     data = data_set.get_values(quantity, unpack=True)
 
     # generate the pdf
-    pdf, bins_edges = numpy.histogram(data, nbins, normed=norm, range=range)
+    pdf, bin_edges = numpy.histogram(data, nbins, normed=norm, range=range)
 
     bins = bin_edges[:-1] + (bin_edges[1] - bin_edges[0]) / 2
 
